@@ -13,24 +13,21 @@ import java.util.List;
 public class JarSearcher {
 
     private static List<String> jars = new ArrayList<String>();
-    private static String SEARCHFILE[] = {"package.subpackage.classname"};
-//	private static String BASEFOLDER[] = {"C:/location1","C:/location2","C:/location3"};
-    private static String BASEFOLDER[] = {"C:/location"};
-
-    public static void main(String[] args) {
-//		File file = new File(BASEFOLDER);
+    
+    public String[] search(String[] basefolders, String searchfile) {
         System.out.println("---- Fetching children and filling jars list -----");
-        for (String BASEFOLDER1 : BASEFOLDER) {
-            getChildren(new File(BASEFOLDER1));
+        for (String bf : basefolders) {
+            getChildren(new File(bf));
         }
 
         System.out.println("---- Searching jars for the wanted file -----");
-        searchJars();
+        String[] result = searchJars(searchfile);
         System.out.println("---- Done ----");
-
+        return result;
     }
 
-    private static void searchJars() {
+    private String[] searchJars(String searchfiles) {
+        List<String> result = new ArrayList<>();
         jars.forEach((jar) -> {
             //System.out.println("---- Searching in " + jar);
             try {
@@ -38,43 +35,30 @@ public class JarSearcher {
                 Enumeration resources = jf.entries();
                 while (resources.hasMoreElements()) {
                     java.util.jar.JarEntry je = (java.util.jar.JarEntry) resources.nextElement();
-                    if (containsFilenames(je.getName(), SEARCHFILE)) {
-                        StringBuilder output = new StringBuilder();
-                        for (int i = 0; i < SEARCHFILE.length - 1; i++) {
-                            output.append(SEARCHFILE[i]).append(" and ");
-                        }
-                        output.append(SEARCHFILE[SEARCHFILE.length - 1]);
-                        output.append(" found in ").append(jar).append(": " ).append( je.getName());
-                        System.out.println(output.toString());
+                    if (containsFilename(je.getName(), searchfiles)) {
+                        result.add(jar);
                     }
                 }
             } catch (java.io.IOException e) {
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
         });
 
+        return result.toArray(new String[0]);
     }
 
-    private static boolean containsFilenames(String name, String[] searchFile) {
-        boolean contain = false;
-        for (String searchFile1 : searchFile) {
-            if (name.contains(searchFile1.replace(".", "/"))) {
-                contain = true;
-            } else {
-                return false;
-            }
-        }
-        return contain;
+    private boolean containsFilename(String name, String searchFile) {
+        return name.contains(searchFile.replace(".", "/"));
     }
 
-    private static void getChildren(File file) {
+    private void getChildren(File file) {
 
         for (File child : file.listFiles()) {
             if (child.isDirectory()) {
                 getChildren(child);
             } else {
                 if (getExtension(child.getName()).equals("jar")) {
-//                  System.out.println("---- Adding jar " + child.getAbsolutePath());
                     jars.add(child.getAbsolutePath());
                 }
             }
@@ -82,13 +66,12 @@ public class JarSearcher {
 
     }
 
-    private static String getExtension(String name) {
+    private String getExtension(String name) {
         int i = name.lastIndexOf('.');
         String ext = "";
         if (i > 0 && i < name.length() - 1) {
             ext = name.substring(i + 1).toLowerCase();
         }
-//		System.out.println(ext);
         return ext;
     }
 }
