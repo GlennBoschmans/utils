@@ -6,6 +6,15 @@
 package jarsearcher;
 
 import jarsearcher.JarSearcher;
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -36,17 +45,18 @@ public class JarSearcherGUI extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jLResult = new javax.swing.JList<>();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Jar Searcher");
 
         jLabel1.setText("Class:");
 
-        jTFClassName.setToolTipText("full class name");
+        jTFClassName.setToolTipText("The search required the full class name, including the package");
 
-        jLabel2.setText("Folder: ");
+        jLabel2.setText("Folders:");
 
-        jTFSearchFolder.setToolTipText("Folder to search in");
+        jTFSearchFolder.setToolTipText("Folders to search in. Use comma-seperated list to have multiple parent folders to search.");
 
         jButton1.setText("Search");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -55,32 +65,37 @@ public class JarSearcherGUI extends javax.swing.JFrame {
             }
         });
 
+        jLResult.setToolTipText("Double-click to open folder");
+        jLResult.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLResultMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(jLResult);
+
+        jLabel3.setText("Result:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1)
-                            .addComponent(jTFSearchFolder)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTFClassName, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 57, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 900, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jTFClassName, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTFSearchFolder)
+                    .addComponent(jButton1)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 900, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(35, 35, 35))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jTFClassName, jTFSearchFolder});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -95,7 +110,9 @@ public class JarSearcherGUI extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jButton1)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
                 .addContainerGap(42, Short.MAX_VALUE))
         );
 
@@ -103,13 +120,46 @@ public class JarSearcherGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        JarSearcher js = new JarSearcher();
-        String[] searchfolder = jTFSearchFolder.getText().split(",");
-        String classname = jTFClassName.getText();
-        String[] searchResult = js.search(searchfolder,classname);
-        
-        jLResult.setListData(searchResult);
+        search();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jLResultMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLResultMouseClicked
+        if (evt.getClickCount() == 2 && !evt.isConsumed()) {
+            try {
+                evt.consume();
+                if (Desktop.isDesktopSupported()) {
+                    File jar = new File(jLResult.getSelectedValue());
+                    Desktop.getDesktop().browse(jar.getParentFile().toURI());
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }//GEN-LAST:event_jLResultMouseClicked
+
+    private void search() {
+        boolean valid = true;
+        JarSearcher js = new JarSearcher();
+
+        if (jTFSearchFolder.getText() == null || "".equals(jTFSearchFolder.getText())) {
+            JOptionPane.showMessageDialog(this, "Please insert at least one search folder.");
+            valid = false;
+        }
+
+        if (jTFClassName.getText() == null || "".equals(jTFClassName.getText())) {
+            JOptionPane.showMessageDialog(this, "Please insert at least a class name.");
+            valid = false;
+        }
+
+        if (valid) {
+            String[] searchfolder = jTFSearchFolder.getText().split(",");
+            String classname = jTFClassName.getText();
+            String[] searchResult = js.search(searchfolder, classname);
+
+            jLResult.setListData(searchResult);
+        }
+
+    }
 
     /**
      * @param args the command line arguments
@@ -151,6 +201,7 @@ public class JarSearcherGUI extends javax.swing.JFrame {
     private javax.swing.JList<String> jLResult;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField jTFClassName;
     private javax.swing.JTextField jTFSearchFolder;
