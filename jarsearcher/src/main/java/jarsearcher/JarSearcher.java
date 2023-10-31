@@ -1,14 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package jarsearcher;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class JarSearcher {
 
@@ -23,6 +20,7 @@ public class JarSearcher {
         System.out.println("---- Searching jars for the wanted file -----");
         String[] result = searchJars(searchfile);
         System.out.println("---- Done ----");
+			
         return result;
     }
 
@@ -45,7 +43,10 @@ public class JarSearcher {
             }
         });
 
-        return result.toArray(new String[0]);
+        //filter out duplicates
+		Set<String> set = new TreeSet(String.CASE_INSENSITIVE_ORDER);
+        set.addAll(result);
+        return (new ArrayList<String>(set)).toArray(new String[0]);
     }
 
     private boolean containsFilename(String name, String searchFile) {
